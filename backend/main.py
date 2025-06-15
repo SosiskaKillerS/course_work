@@ -3,7 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from .database import SessionLocal, engine
 from . import models
-from .models import User, LoginRequest, UserBase, UserRequest, UserCreate, ChangePassword, DeleteAccount, ChangeUsername
+from .models import (
+    User, LoginRequest, UserBase, UserRequest, UserCreate, 
+    ChangePassword, DeleteAccount, ChangeUsername, 
+    Movies, MovieResponse
+)
 from typing import List
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
@@ -250,4 +254,31 @@ def change_username(username_data: ChangeUsername, current_user: User = Depends(
         return JSONResponse(
             status_code=500,
             content={"detail": "Ошибка при изменении имени пользователя"}
+        )
+
+@app.get("/movies", response_model=List[MovieResponse])
+def get_movies(db: Session = Depends(get_db)):
+    try:
+        movies = db.query(Movies).all()
+        return movies
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Ошибка при получении списка фильмов"}
+        )
+
+@app.get("/movies/{movie_id}", response_model=MovieResponse)
+def get_movie(movie_id: int, db: Session = Depends(get_db)):
+    try:
+        movie = db.query(Movies).filter(Movies.id == movie_id).first()
+        if not movie:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Фильм не найден"}
+            )
+        return movie
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Ошибка при получении информации о фильме"}
         )

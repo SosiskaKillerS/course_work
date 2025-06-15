@@ -96,4 +96,17 @@ class ChangeUsername(BaseModel):
     password: str
 
     class Config:
+        from_attributes = True
+
+class MovieBase(BaseModel):
+    title: str
+    description: str
+    poster_path: str
+    rating: float
+    year: int
+
+class MovieResponse(MovieBase):
+    id: int
+
+    class Config:
         from_attributes = True  
