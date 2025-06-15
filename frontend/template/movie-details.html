@@ -4,61 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Детали фильма</title>
-    <link rel="stylesheet" href="../static/css/movies.css">
+    <link rel="stylesheet" href="../static/css/style.css">
     <link rel="stylesheet" href="../static/css/movie-details.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <nav>
+    <header>
+        <nav>
+            <div class="nav-container">
                 <div class="nav-left">
-                    <a href="movies.html" class="logo">
+                    <a href="movies.html" class="nav-link">
                         <i class="fas fa-film"></i>
-                        KinoService
+                        Фильмы
                     </a>
                 </div>
                 <div class="nav-right" id="navLinks">
-                    <!-- Здесь будет динамически добавлена навигация -->
+                    <!-- Здесь будут кнопки авторизации -->
                 </div>
-            </nav>
-        </header>
+            </div>
+        </nav>
+    </header>
 
-        <main>
-            <div id="movie-details" class="movie-details">
-                <div class="movie-details-container">
-                    <div class="movie-poster">
-                        <img id="moviePoster" src="" alt="Movie Poster" onerror="handleImageError(this)">
+    <main>
+        <div id="movie-details" class="movie-details">
+            <div class="movie-details-container">
+                <div class="movie-poster">
+                    <img id="moviePoster" src="" alt="Movie Poster" onerror="handleImageError(this)">
+                </div>
+                <div class="movie-info">
+                    <h1 id="movieTitle"></h1>
+                    <div class="movie-meta">
+                        <span class="movie-year" id="movieYear"></span>
+                        <span class="movie-rating" id="movieRating"></span>
                     </div>
-                    <div class="movie-info">
-                        <h1 id="movieTitle"></h1>
-                        <div class="movie-meta">
-                            <span class="movie-year" id="movieYear"></span>
-                            <span class="movie-rating" id="movieRating"></span>
-                        </div>
-                        <div class="movie-description">
-                            <h2>Описание</h2>
-                            <p id="movieDescription"></p>
-                        </div>
-                        <div class="movie-genres">
-                            <h2>Жанры</h2>
-                            <div class="genre-tags" id="movieGenres"></div>
-                        </div>
-                        <div class="movie-directors">
-                            <h2>Режиссеры</h2>
-                            <ul id="movieDirectors"></ul>
-                        </div>
-                        <div class="movie-actors">
-                            <h2>Актеры</h2>
-                            <ul id="movieActors"></ul>
-                        </div>
+                    <div class="movie-description">
+                        <h2>Описание</h2>
+                        <p id="movieDescription"></p>
+                    </div>
+                    <div class="movie-genres">
+                        <h2>Жанры</h2>
+                        <div class="genre-tags" id="movieGenres"></div>
+                    </div>
+                    <div class="movie-directors">
+                        <h2>Режиссеры</h2>
+                        <ul id="movieDirectors"></ul>
+                    </div>
+                    <div class="movie-actors">
+                        <h2>Актеры</h2>
+                        <ul id="movieActors"></ul>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
-    <script src="../static/js/movies.js"></script>
+    <script src="../static/js/common.js"></script>
     <script src="../static/js/movie-details.js"></script>
 </body>
 </html> 
