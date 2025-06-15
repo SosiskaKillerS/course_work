@@ -193,6 +193,7 @@ main {
     display: flex;
     flex-direction: column;
     border: 1px solid #2d2438;
+    cursor: pointer;
 }
 
 .movie-card:hover {
@@ -234,6 +235,12 @@ main {
     font-weight: 600;
     margin: 0;
     font-size: 1rem;
+}
+
+.movie-rating::before {
+    content: '★';
+    margin-right: 5px;
+    color: #ffd700;
 }
 
 .movie-genres {

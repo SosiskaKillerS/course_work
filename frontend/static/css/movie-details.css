@@ -1,0 +1,9 @@
+.movie-details {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #1a1625;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(138, 43, 226, 0.2);
+    border: 1px solid #2d2438;
+} 

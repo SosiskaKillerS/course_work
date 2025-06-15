@@ -12,6 +12,11 @@ window.handleImageError = function(img) {
     img.src = '../static/images/no-poster.jpg';
 };
 
+// Глобальная функция для перехода на страницу деталей фильма
+window.goToMovieDetails = function(movieId) {
+    window.location.href = `movie-details.html?id=${movieId}`;
+};
+
 // Функция для обновления навигации
 function updateNavigation() {
     const navLinks = document.getElementById('navLinks');
@@ -136,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const imagePath = getImagePath(movie.poster_path);
             console.log(`Movie ${movie.title} image path:`, imagePath);
             return `
-                <div class="movie-card">
+                <div class="movie-card" onclick="goToMovieDetails(${movie.id})">
                     <img src="${imagePath}" 
                          alt="${movie.title}"
                          onerror="handleImageError(this)"
@@ -158,29 +163,51 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Настройка поиска
-        searchInput.addEventListener('input', () => {
-            const searchTerm = searchInput.value.toLowerCase();
-            filteredMovies = allMovies.filter(movie => 
-                movie.title.toLowerCase().includes(searchTerm)
-            );
-            displayMovies();
+        // Получаем уникальные жанры
+        const genres = [...new Set(allMovies.flatMap(movie => movie.genres || []))];
+        const genreFilter = document.getElementById('genreFilter');
+        
+        // Добавляем опции для жанров
+        genres.forEach(genre => {
+            const option = document.createElement('option');
+            option.value = genre;
+            option.textContent = genre;
+            genreFilter.appendChild(option);
         });
-
-        // Настройка фильтра по году
+        
+        // Получаем уникальные годы
         const years = [...new Set(allMovies.map(movie => movie.year))].sort((a, b) => b - a);
-        yearFilter.innerHTML = `
-            <option value="">Все годы</option>
-            ${years.map(year => `<option value="${year}">${year}</option>`).join('')}
-        `;
-
-        yearFilter.addEventListener('change', () => {
-            const selectedYear = yearFilter.value;
-            filteredMovies = allMovies.filter(movie => 
-                !selectedYear || movie.year.toString() === selectedYear
-            );
-            displayMovies();
+        const yearFilter = document.getElementById('yearFilter');
+        
+        // Добавляем опции для годов
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearFilter.appendChild(option);
         });
+        
+        // Добавляем обработчики событий для фильтров
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        genreFilter.addEventListener('change', applyFilters);
+        yearFilter.addEventListener('change', applyFilters);
+    }
+
+    // Применение фильтров
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const selectedGenre = document.getElementById('genreFilter').value;
+        const selectedYear = document.getElementById('yearFilter').value;
+        
+        filteredMovies = allMovies.filter(movie => {
+            const matchesSearch = movie.title.toLowerCase().includes(searchTerm);
+            const matchesGenre = !selectedGenre || (movie.genres && movie.genres.includes(selectedGenre));
+            const matchesYear = !selectedYear || movie.year.toString() === selectedYear;
+            
+            return matchesSearch && matchesGenre && matchesYear;
+        });
+        
+        displayMovies();
     }
 
     // Загрузка фильмов при загрузке страницы
