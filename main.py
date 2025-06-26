@@ -173,7 +173,8 @@ class MovieForm(FlaskForm):
     poster_file = FileField('Загрузить постер', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Только изображения!')])
     director_id = SelectField('Режиссёр', coerce=int, validators=[Optional()])
     new_director = StringField('или добавить нового', validators=[Optional(), Length(max=100)])
-    genres = StringField('Жанры', validators=[Optional(), Length(max=200)])
+    genres = SelectMultipleField('Жанры', coerce=int, validators=[Optional()])
+    new_genres = StringField('или добавить новые жанры (через запятую)', validators=[Optional(), Length(max=200)])
     actors_ids = SelectMultipleField('Актеры', coerce=int, validators=[Optional()])
     new_actors = StringField('или добавить новых (через запятую)', validators=[Optional(), Length(max=500)])
     submit = SubmitField('Сохранить')
@@ -882,10 +883,11 @@ def admin_add_movie():
     db = SessionLocal()
     directors = db.query(Director).order_by(Director.name).all()
     actors = db.query(Actor).order_by(Actor.name).all()
-    db.close()
+    genres = db.query(Genre).order_by(Genre.name).all()
     form = MovieForm()
     form.director_id.choices = [(0, '— выберите —')] + [(d.id, d.name) for d in directors]
     form.actors_ids.choices = [(a.id, a.name) for a in actors]
+    form.genres.choices = [(g.id, g.name) for g in genres]
     if form.validate_on_submit():
         db = SessionLocal()
         try:
@@ -928,16 +930,19 @@ def admin_add_movie():
             )
             db.add(movie)
             db.commit()
-            # Жанры
+            # Жанры из списка
             if form.genres.data:
-                genre_names = [g.strip() for g in form.genres.data.split(',')]
-                for genre_name in genre_names:
+                movie.genres = db.query(Genre).filter(Genre.id.in_(form.genres.data)).all()
+            # Новые жанры
+            if form.new_genres.data:
+                for genre_name in [g.strip() for g in form.new_genres.data.split(',') if g.strip()]:
                     genre = db.query(Genre).filter_by(name=genre_name).first()
                     if not genre:
                         genre = Genre(name=genre_name)
                         db.add(genre)
                         db.commit()
-                    movie.genres.append(genre)
+                    if genre not in movie.genres:
+                        movie.genres.append(genre)
             # Актеры
             movie.actors = actor_objs
             db.commit()
@@ -948,6 +953,7 @@ def admin_add_movie():
             flash('Ошибка при добавлении фильма. Попробуйте еще раз.', 'danger')
         finally:
             db.close()
+    db.close()
     return render_template('add_movie.html', form=form)
 
 @app.route('/admin/delete_movie/<int:movie_id>', methods=['POST'])
@@ -1031,8 +1037,10 @@ def edit_movie(movie_id):
         # choices для select
         directors = db.query(Director).order_by(Director.name).all()
         actors = db.query(Actor).order_by(Actor.name).all()
+        genres = db.query(Genre).order_by(Genre.name).all()
         form.director_id.choices = [(0, '— выберите —')] + [(d.id, d.name) for d in directors]
         form.actors_ids.choices = [(a.id, a.name) for a in actors]
+        form.genres.choices = [(g.id, g.name) for g in genres]
         if form.validate_on_submit():
             movie.title = form.title.data
             movie.description = form.description.data
@@ -1056,14 +1064,16 @@ def edit_movie(movie_id):
             # Обновляем жанры
             movie.genres.clear()
             if form.genres.data:
-                genre_names = [g.strip() for g in form.genres.data.split(',')]
-                for genre_name in genre_names:
+                movie.genres = db.query(Genre).filter(Genre.id.in_(form.genres.data)).all()
+            if form.new_genres.data:
+                for genre_name in [g.strip() for g in form.new_genres.data.split(',') if g.strip()]:
                     genre = db.query(Genre).filter_by(name=genre_name).first()
                     if not genre:
                         genre = Genre(name=genre_name)
                         db.add(genre)
                         db.commit()
-                    movie.genres.append(genre)
+                    if genre not in movie.genres:
+                        movie.genres.append(genre)
             # Обновляем актеров
             movie.actors.clear()
             actor_objs = []
@@ -1088,7 +1098,7 @@ def edit_movie(movie_id):
         if movie.director:
             form.director_id.data = movie.director.id
         if movie.genres:
-            form.genres.data = ', '.join([g.name for g in movie.genres])
+            form.genres.data = [g.id for g in movie.genres]
         if movie.actors:
             form.actors_ids.data = [a.id for a in movie.actors]
         return render_template('edit_movie.html', form=form, movie=movie)
