@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}KinoService - Главная{% endblock %}
+
+{% block sidebar %}
+{% if current_user.is_authenticated %}
+    <aside class="sidebar">
+        <form method="get" action="{{ url_for('index') }}">
+            {% if search %}
+                <input type="hidden" name="search" value="{{ search }}">
+            {% endif %}
+            <div class="filter-section">
+                <h5>Жанры</h5>
+                <div class="filter-list">
+                    {% for genre in all_genres %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="genre" value="{{ genre.id }}" id="genre-{{ genre.id }}" {% if genre.id in selected_genres %}checked{% endif %}>
+                            <label class="form-check-label" for="genre-{{ genre.id }}">{{ genre.name }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="filter-section">
+                <h5>Актёры</h5>
+                <select name="actor" multiple class="form-select filter-select" size="6">
+                    {% for actor in all_actors %}
+                        <option value="{{ actor.id }}" {% if actor.id in selected_actors %}selected{% endif %}>{{ actor.name }}</option>
+                    {% endfor %}
+                </select>
+                <small>Удерживайте Ctrl для выбора нескольких</small>
+            </div>
+            <div class="filter-section">
+                <h5>Режиссёры</h5>
+                <select name="director" multiple class="form-select filter-select" size="6">
+                    {% for director in all_directors %}
+                        <option value="{{ director.id }}" {% if director.id in selected_directors %}selected{% endif %}>{{ director.name }}</option>
+                    {% endfor %}
+                </select>
+                <small>Удерживайте Ctrl для выбора нескольких</small>
+            </div>
+            <div class="filter-buttons">
+                <button type="submit" class="btn btn-primary">Показать</button>
+                <a href="{{ url_for('index') }}{% if search %}?search={{ search }}{% endif %}" class="btn btn-outline-secondary">Очистить</a>
+            </div>
+        </form>
+    </aside>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not current_user.is_authenticated %}
+    <div class="container">
+        <div class="access-denied fade-in">
+            <div class="access-denied-icon">🔒</div>
+            <h1 class="access-denied-title">Доступ ограничен</h1>
+            <p class="access-denied-text">Для просмотра информации о фильмах необходимо войти в систему</p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Войти</a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary">Регистрация</a>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="page-layout">
+        <!-- Основной контент -->
+        <main class="main-content">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                    <h1 style="color: var(--text-primary);">Все фильмы</h1>
+                    {% if current_user.role_id in [2, 3] %}
+                        <a href="{{ url_for('admin_add_movie') }}" class="btn btn-success">Добавить фильм</a>
+                    {% endif %}
+                </div>
+                {% if search %}
+                    <div class="mb-3" style="color: var(--text-secondary);">Результаты поиска по запросу: <b>{{ search }}</b></div>
+                {% endif %}
+                {% if movies %}
+                    <div class="movie-grid">
+                        {% for movie in movies %}
+                        <div class="movie-card fade-in">
+                            {% if movie.poster_path %}
+                                {% if movie.poster_path.startswith('http') %}
+                                    <img src="{{ movie.poster_path }}" 
+                                         alt="{{ movie.title }}" 
+                                         class="movie-poster"
+                                         onerror="this.src='{{ url_for('static', filename='images/superbad.jpg') }}'">
+                                {% else %}
+                                    <img src="{{ movie.poster_path }}" 
+                                         alt="{{ movie.title }}" 
+                                         class="movie-poster"
+                                         onerror="this.src='{{ url_for('static', filename='images/superbad.jpg') }}'">
+                                {% endif %}
+                            {% else %}
+                                <img src="{{ url_for('static', filename='images/superbad.jpg') }}" 
+                                     alt="{{ movie.title }}" 
+                                     class="movie-poster">
+                            {% endif %}
+                            <div class="movie-info">
+                                <h3 class="movie-title">{{ movie.title }}</h3>
+                                {% if movie.year %}
+                                    <p class="movie-year">{{ movie.year }}</p>
+                                {% endif %}
+                                {% if movie.director %}
+                                    <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Режиссёр: {{ movie.director.name }}</p>
+                                {% endif %}
+                                {% if movie.genres %}
+                                    <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Жанры: {{ movie.genres|map(attribute='name')|join(', ') }}</p>
+                                {% endif %}
+                                <p class="movie-rating">★ {{ "%.1f"|format(movie.rating or 0) }}</p>
+                                <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="btn btn-primary btn-sm">Подробнее</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3 style="color: var(--text-primary);">Фильмы не найдены</h3>
+                            <p style="color: var(--text-secondary);">Пока в базе данных нет фильмов.</p>
+                            {% if current_user.role_id in [2, 3] %}
+                                <a href="{{ url_for('admin_add_movie') }}" class="btn btn-primary">Добавить первый фильм</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+{% endif %}
+{% endblock %} 

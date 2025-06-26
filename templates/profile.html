@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль - KinoService{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-section fade-in">
+        <div class="text-center">
+            <div class="profile-avatar">
+                {{ current_user.username[0].upper() }}
+            </div>
+            <h1 style="color: var(--text-primary); margin-bottom: 1rem;">{{ current_user.username }}</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;">{{ current_user.email }}</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 style="margin: 0; color: white;">Информация о профиле</h3>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Имя пользователя:</strong> {{ current_user.username }}</p>
+                        <p><strong>Email:</strong> {{ current_user.email }}</p>
+                        <p><strong>Подписка:</strong> 
+                            <span class="badge bg-primary">{{ current_user.subscription }}</span>
+                        </p>
+                        <p><strong>Роль:</strong> 
+                            {% if current_user.role_id == 1 %}
+                                <span class="badge bg-secondary">Пользователь</span>
+                            {% elif current_user.role_id == 2 %}
+                                <span class="badge bg-warning">Модератор</span>
+                            {% elif current_user.role_id == 3 %}
+                                <span class="badge bg-danger">Администратор</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Дата регистрации:</strong> {{ current_user.created_at.strftime('%d.%m.%Y') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 style="margin: 0; color: white;">Действия</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('index') }}" class="btn btn-primary">Смотреть фильмы</a>
+                            {% if current_user.role_id in [2, 3] %}
+                                <a href="{{ url_for('admin_add_movie') }}" class="btn btn-success">Добавить фильм</a>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                Сменить пароль
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeUsernameModal">
+                                Сменить имя пользователя
+                            </button>
+                            {% if current_user.subscription != 'pro' %}
+                                <button type="button" class="btn btn-outline-warning border border-warning" data-bs-toggle="modal" data-bs-target="#subscribeModal">
+                                    Оформить подписку
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn btn-outline-secondary border border-secondary" data-bs-toggle="modal" data-bs-target="#unsubscribeModal">
+                                    Отменить подписку
+                                </button>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-danger border border-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                                Удалить аккаунт
+                            </button>
+                            <a href="{{ url_for('logout') }}" class="btn btn-outline-primary">Выйти</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно смены пароля -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Сменить пароль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('change_password') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Текущий пароль</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">Новый пароль</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_new_password" class="form-label">Подтвердите новый пароль</label>
+                        <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сменить пароль</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно смены имени пользователя -->
+<div class="modal fade" id="changeUsernameModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Сменить имя пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('change_username') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="new_username" class="form-label">Новое имя пользователя</label>
+                        <input type="text" class="form-control" id="new_username" name="new_username" value="{{ current_user.username }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сменить имя</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно оформления подписки -->
+<div class="modal fade" id="subscribeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Оформить подписку PRO</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('change_subscription') }}">
+                <div class="modal-body">
+                    <div style="background: linear-gradient(90deg, #5f2c82 0%, #49a09d 100%); color: #fff; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; font-size: 1.05em;">
+                        <b>Подписка PRO</b> открывает доступ к детальной информации о фильмах и дополнительным возможностям!
+                    </div>
+                    <p>Стоимость: <b>0₽</b> (тестовый режим)</p>
+                    <input type="hidden" name="subscription" value="pro">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-warning">Оформить PRO</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно отмены подписки -->
+<div class="modal fade" id="unsubscribeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Отменить подписку PRO</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('change_subscription') }}">
+                <div class="modal-body">
+                    <div style="background: linear-gradient(90deg, #ffb347 0%, #ffcc33 100%); color: #222; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; font-size: 1.05em;">
+                        Вы уверены, что хотите отменить подписку <b>PRO</b>? Доступ к деталям фильмов будет ограничен.
+                    </div>
+                    <input type="hidden" name="subscription" value="free">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-secondary">Отменить подписку</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно удаления аккаунта -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удалить аккаунт</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('delete_account') }}">
+                <div class="modal-body">
+                    <div style="background: linear-gradient(90deg, #ff5858 0%, #f857a6 100%); color: #fff; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; font-size: 1.05em;">
+                        <b>Внимание!</b> Это действие нельзя отменить. Все ваши данные будут удалены навсегда.
+                    </div>
+                    <div class="mb-3">
+                        <label for="delete_password" class="form-label">Введите пароль для подтверждения</label>
+                        <input type="password" class="form-control" id="delete_password" name="delete_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="delete_confirm" class="form-label">Введите "УДАЛИТЬ" для подтверждения</label>
+                        <input type="text" class="form-control" id="delete_confirm" name="delete_confirm" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Удалить аккаунт</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

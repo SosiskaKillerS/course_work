@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}{{ movie.title }} - KinoService{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if not current_user.is_authenticated %}
+        <div class="access-denied fade-in">
+            <div class="access-denied-icon">🔒</div>
+            <h1 class="access-denied-title">Доступ ограничен</h1>
+            <p class="access-denied-text">Для просмотра информации о фильмах необходимо войти в систему</p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Войти</a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary">Регистрация</a>
+            </div>
+        </div>
+    {% elif subscription_required %}
+        <div class="access-denied fade-in">
+            <div class="access-denied-icon">🔒</div>
+            <h1 class="access-denied-title">Требуется подписка PRO</h1>
+            <p class="access-denied-text">Детальная информация о фильме доступна только для пользователей с подпиской <b>PRO</b>.</p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('profile') }}" class="btn btn-primary">Оформить подписку</a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Назад к каталогу</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="movie-detail fade-in">
+            <div class="row">
+                <div class="col-md-4">
+                    {% if movie.poster_path %}
+                        {% if movie.poster_path.startswith('http') %}
+                            <img src="{{ movie.poster_path }}" 
+                                 alt="{{ movie.title }}" 
+                                 class="movie-detail-poster w-100"
+                                 onerror="this.src='{{ url_for('static', filename='images/superbad.jpg') }}'">
+                        {% else %}
+                            <img src="{{ movie.poster_path }}" 
+                                 alt="{{ movie.title }}" 
+                                 class="movie-detail-poster w-100"
+                                 onerror="this.src='{{ url_for('static', filename='images/superbad.jpg') }}'">
+                        {% endif %}
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/superbad.jpg') }}" 
+                             alt="{{ movie.title }}" 
+                             class="movie-detail-poster w-100">
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <div class="movie-detail-info">
+                        <h1>{{ movie.title }}</h1>
+                        {% if movie.year %}
+                            <p><strong>Год выпуска:</strong> {{ movie.year }}</p>
+                        {% endif %}
+                        {% if movie.director %}
+                            <p><strong>Режиссер:</strong> {{ movie.director.name }}</p>
+                        {% endif %}
+                        {% if movie.genres %}
+                            <p><strong>Жанры:</strong> {{ movie.genres|map(attribute='name')|join(', ') }}</p>
+                        {% endif %}
+                        {% if movie.actors %}
+                            <p><strong>Актеры:</strong> {{ movie.actors|map(attribute='name')|join(', ') }}</p>
+                        {% endif %}
+                        <p><strong>Рейтинг:</strong> <span class="movie-rating">
+                            {% set full = movie.rating|int %}
+                            {% set half = 1 if movie.rating - full >= 0.5 else 0 %}
+                            {% set empty = 10 - full - half %}
+                            {% for i in range(full) %}<span class="star-display">&#9733;</span>{% endfor %}
+                            {% if half %}<span class="star-display star-half">&#9733;</span>{% endif %}
+                            {% for i in range(empty) %}<span class="star-display">&#9734;</span>{% endfor %}
+                            {{ "%.1f"|format(movie.rating) }}
+                        </span></p>
+                        {% if movie.description %}
+                            <p><strong>Описание:</strong></p>
+                            <p>{{ movie.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Отзывы -->
+        <div class="review-section fade-in">
+            <h2 style="color: var(--text-primary); margin-bottom: 2rem;">Отзывы</h2>
+            
+            <!-- Форма добавления отзыва -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 style="margin: 0; color: white;">Оставить отзыв</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_review', movie_id=movie.id) }}">
+                        {{ review_form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ review_form.rating.label(class="form-label") }}
+                            <div class="d-flex align-items-center gap-3">
+                                <select name="rating" id="rating-select" class="form-select" style="max-width: 120px;">
+                                    {% for i in range(0, 21) %}
+                                        {% set val = i * 0.5 %}
+                                        <option value="{{ val }}" {% if review_form.rating.data and review_form.rating.data == val %}selected{% endif %}>{{ val }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span id="rating-stars"></span>
+                            </div>
+                            {% if review_form.rating.errors %}
+                                <div class="text-danger">
+                                    {% for error in review_form.rating.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <script>
+                        function renderStars(container, value) {
+                            value = parseFloat(value) || 0;
+                            let html = '';
+                            for (let i = 1; i <= 10; i++) {
+                                if (value >= i) {
+                                    html += '<span class="star-display">&#9733;</span>';
+                                } else if (value >= i - 0.5) {
+                                    html += '<span class="star-display star-half">&#9733;</span>';
+                                } else {
+                                    html += '<span class="star-display">&#9734;</span>';
+                                }
+                            }
+                            container.innerHTML = html;
+                        }
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const select = document.getElementById('rating-select');
+                            const stars = document.getElementById('rating-stars');
+                            renderStars(stars, select.value);
+                            select.addEventListener('change', function() {
+                                renderStars(stars, this.value);
+                            });
+                        });
+                        </script>
+                        <style>
+                        .star-display {
+                            color: #f59e0b;
+                            font-size: 1.5em;
+                            position: relative;
+                            display: inline-block;
+                            width: 1em;
+                        }
+                        .star-display.star-half {
+                            position: relative;
+                        }
+                        .star-display.star-half::before {
+                            content: '\2605';
+                            color: #f59e0b;
+                            position: absolute;
+                            left: 0;
+                            width: 50%;
+                            overflow: hidden;
+                            display: inline-block;
+                        }
+                        .star-display.star-half {
+                            color: #444;
+                        }
+                        </style>
+                        <div class="mb-3">
+                            {{ review_form.comment.label(class="form-label") }}
+                            {{ review_form.comment(class="form-control", rows="4") }}
+                            {% if review_form.comment.errors %}
+                                <div class="text-danger">
+                                    {% for error in review_form.comment.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {{ review_form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Список отзывов -->
+            {% if reviews %}
+                {% for review in reviews %}
+                <div class="review-item fade-in">
+                    <div class="review-header">
+                        <span class="review-author">{{ review.user.username }}</span>
+                        <span class="review-rating">
+                            {% set full = review.rating|int %}
+                            {% set half = 1 if review.rating - full >= 0.5 else 0 %}
+                            {% set empty = 10 - full - half %}
+                            {% for i in range(full) %}<span class="star-display">&#9733;</span>{% endfor %}
+                            {% if half %}<span class="star-display star-half">&#9733;</span>{% endif %}
+                            {% for i in range(empty) %}<span class="star-display">&#9734;</span>{% endfor %}
+                            {{ "%.1f"|format(review.rating) }}
+                        </span>
+                        {% if current_user.is_authenticated and review.user_id == current_user.id %}
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#editReviewModal{{ review.id }}">Редактировать</button>
+                                <form method="POST" action="{{ url_for('delete_review', review_id=review.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить этот отзыв?')">Удалить</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if review.comment %}
+                        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">{{ review.comment }}</p>
+                    {% endif %}
+                    <div class="review-date">{{ review.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                </div>
+                <!-- Модальное окно редактирования отзыва -->
+                <div class="modal fade" id="editReviewModal{{ review.id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Редактировать отзыв</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form method="POST" action="{{ url_for('edit_review', review_id=review.id) }}">
+                                <div class="modal-body">
+                                    <label class="form-label">Рейтинг</label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <select name="rating" id="edit-rating-select-{{ review.id }}" class="form-select" style="max-width: 120px;">
+                                            {% for i in range(0, 21) %}
+                                                {% set val = i * 0.5 %}
+                                                <option value="{{ val }}" {% if review.rating == val %}selected{% endif %}>{{ val }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span id="edit-rating-stars-{{ review.id }}"></span>
+                                    </div>
+                                    <div class="mb-3 mt-3">
+                                        <label class="form-label">Комментарий</label>
+                                        <textarea name="comment" class="form-control" rows="4">{{ review.comment }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const select = document.getElementById('edit-rating-select-{{ review.id }}');
+                    const stars = document.getElementById('edit-rating-stars-{{ review.id }}');
+                    renderStars(stars, select.value);
+                    select.addEventListener('change', function() {
+                        renderStars(stars, this.value);
+                    });
+                });
+                </script>
+                {% endfor %}
+            {% else %}
+                <div class="text-center" style="color: var(--text-secondary);">
+                    <p>Пока нет отзывов к этому фильму. Будьте первым!</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.star-display {
+    color: #f59e0b;
+    font-size: 1.2em;
+    position: relative;
+    display: inline-block;
+    width: 1em;
+}
+.star-display.star-half {
+    position: relative;
+}
+.star-display.star-half::before {
+    content: '\2605';
+    color: #f59e0b;
+    position: absolute;
+    left: 0;
+    width: 50%;
+    overflow: hidden;
+    display: inline-block;
+}
+.star-display.star-half {
+    color: #444;
+}
+.rating-select, #rating-select, [id^="edit-rating-select-"] {
+    background: #18122b !important;
+    color: #fff !important;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: 500;
+    padding: 0.5em 1em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rating-select:focus, #rating-select:focus, [id^="edit-rating-select-"]:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color)33;
+}
+.rating-select option, #rating-select option, [id^="edit-rating-select-"] option {
+    background: #18122b;
+    color: #fff;
+}
+</style>
+{% endblock %} 

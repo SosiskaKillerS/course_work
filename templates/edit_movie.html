@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}KinoService - Редактирование фильма{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 style="color: var(--text-primary);">Редактирование фильма</h1>
+        <a href="{{ url_for('moderator_panel') }}" class="btn btn-secondary">Назад к панели</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 style="margin: 0; color: white;">Редактирование: {{ movie.title }}</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control") }}
+                    {% if form.title.errors %}
+                        <div class="text-danger">
+                            {% for error in form.title.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control", rows=4) }}
+                    {% if form.description.errors %}
+                        <div class="text-danger">
+                            {% for error in form.description.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.year.label(class="form-label") }}
+                            {{ form.year(class="form-control") }}
+                            {% if form.year.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.year.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Показываем текущий постер -->
+                {% if movie.poster_path %}
+                <div class="mb-3 text-center">
+                    <img src="{{ movie.poster_path }}" alt="Постер" style="max-width:220px; max-height:320px; border-radius:12px; box-shadow:0 2px 12px #0006;">
+                    <div style="color:var(--text-secondary); font-size:0.9em; margin-top:0.5em;">Текущий постер</div>
+                </div>
+                {% endif %}
+                <!-- Поле для загрузки нового постера -->
+                <div class="mb-3">
+                    {{ form.poster_file.label(class="form-label") }}
+                    {{ form.poster_file(class="form-control") }}
+                    <small class="form-text text-muted">Можно загрузить новое изображение (jpg, png, gif).</small>
+                    {% if form.poster_file.errors %}
+                        <div class="text-danger">
+                            {% for error in form.poster_file.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Блок выбора режиссера -->
+                <div class="mb-3">
+                    {{ form.director_id.label(class="form-label") }}
+                    {{ form.director_id(class="form-select") }}
+                    <small class="form-text text-muted">Выберите режиссера из списка или добавьте нового ниже.</small>
+                    {% if form.director_id.errors %}
+                        <div class="text-danger">
+                            {% for error in form.director_id.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="mt-2">
+                        {{ form.new_director.label(class="form-label") }}
+                        {{ form.new_director(class="form-control", placeholder="Имя нового режиссера") }}
+                        {% if form.new_director.errors %}
+                            <div class="text-danger">
+                                {% for error in form.new_director.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Блок выбора актеров -->
+                <div class="mb-3">
+                    {{ form.actors_ids.label(class="form-label") }}
+                    {{ form.actors_ids(class="form-select", multiple=true, size=6) }}
+                    <small class="form-text text-muted">Выберите актеров из списка или добавьте новых ниже.</small>
+                    {% if form.actors_ids.errors %}
+                        <div class="text-danger">
+                            {% for error in form.actors_ids.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="mt-2">
+                        {{ form.new_actors.label(class="form-label") }}
+                        {{ form.new_actors(class="form-control", placeholder="Актер 1, Актер 2, ...") }}
+                        {% if form.new_actors.errors %}
+                            <div class="text-danger">
+                                {% for error in form.new_actors.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    {{ form.genres.label(class="form-label") }}
+                    {{ form.genres(class="form-control") }}
+                    <small class="form-text text-muted">Введите жанры через запятую (например: Драма, Боевик)</small>
+                    {% if form.genres.errors %}
+                        <div class="text-danger">
+                            {% for error in form.genres.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="btn btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 
