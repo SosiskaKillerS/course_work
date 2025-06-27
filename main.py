@@ -13,13 +13,14 @@ import os
 from flask_wtf.file import FileField, FileAllowed
 import uuid
 from werkzeug.utils import secure_filename
+from config import Config
 
 # Создаем Flask приложение
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'
+app.config['SECRET_KEY'] = Config.SECRET_KEY
 
 # Настройка базы данных
-DATABASE_URL = "postgresql://postgres:1231@localhost:5434/kinoservice_db"
+DATABASE_URL = Config.DATABASE_URL
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -1161,6 +1162,37 @@ def delete_review_moderator(review_id):
 @app.route('/movies')
 def movies_redirect():
     return redirect(url_for('index'))
+
+@app.route('/test-db')
+def test_db():
+    """Тестовый роут для проверки подключения к базе данных"""
+    try:
+        db = SessionLocal()
+        movie_count = db.query(Movie).count()
+        user_count = db.query(User).count()
+        director_count = db.query(Director).count()
+        actor_count = db.query(Actor).count()
+        genre_count = db.query(Genre).count()
+        review_count = db.query(Review).count()
+        db.close()
+        
+        return {
+            'status': 'success',
+            'message': 'База данных работает!',
+            'data': {
+                'movies': movie_count,
+                'users': user_count,
+                'directors': director_count,
+                'actors': actor_count,
+                'genres': genre_count,
+                'reviews': review_count
+            }
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f'Ошибка подключения к БД: {str(e)}'
+        }
 
 if __name__ == '__main__':
     # Инициализируем базу данных при первом запуске
