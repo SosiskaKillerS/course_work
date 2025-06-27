@@ -14,7 +14,7 @@
             <h3 style="margin: 0; color: white;">Редактирование: {{ movie.title }}</h3>
         </div>
         <div class="card-body">
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 {{ form.hidden_tag() }}
                 
                 <div class="mb-3">
@@ -60,8 +60,18 @@
                 <!-- Показываем текущий постер -->
                 {% if movie.poster_path %}
                 <div class="mb-3 text-center">
-                    <img src="{{ movie.poster_path }}" alt="Постер" style="max-width:220px; max-height:320px; border-radius:12px; box-shadow:0 2px 12px #0006;">
+                    <img src="{{ movie.poster_path }}" 
+                         alt="Постер" 
+                         style="max-width:220px; max-height:320px; border-radius:12px; box-shadow:0 2px 12px #0006;"
+                         onerror="this.src='{{ url_for('static', filename='images/superbad.jpg') }}'">
                     <div style="color:var(--text-secondary); font-size:0.9em; margin-top:0.5em;">Текущий постер</div>
+                </div>
+                {% else %}
+                <div class="mb-3 text-center">
+                    <img src="{{ url_for('static', filename='images/superbad.jpg') }}" 
+                         alt="Постер по умолчанию" 
+                         style="max-width:220px; max-height:320px; border-radius:12px; box-shadow:0 2px 12px #0006;">
+                    <div style="color:var(--text-secondary); font-size:0.9em; margin-top:0.5em;">Постер не загружен</div>
                 </div>
                 {% endif %}
                 <!-- Поле для загрузки нового постера -->

@@ -1033,6 +1033,7 @@ def edit_movie(movie_id):
         if not movie:
             flash('Фильм не найден.', 'danger')
             return redirect(url_for('moderator_panel'))
+        
         form = MovieForm()
         # choices для select
         directors = db.query(Director).order_by(Director.name).all()
@@ -1041,10 +1042,25 @@ def edit_movie(movie_id):
         form.director_id.choices = [(0, '— выберите —')] + [(d.id, d.name) for d in directors]
         form.actors_ids.choices = [(a.id, a.name) for a in actors]
         form.genres.choices = [(g.id, g.name) for g in genres]
+        
+        if request.method == 'GET':
+            # Заполняем форму данными фильма при GET-запросе
+            form.title.data = movie.title
+            form.description.data = movie.description
+            form.year.data = movie.year
+            if movie.director:
+                form.director_id.data = movie.director.id
+            if movie.genres:
+                form.genres.data = [g.id for g in movie.genres]
+            if movie.actors:
+                form.actors_ids.data = [a.id for a in movie.actors]
+            return render_template('edit_movie.html', form=form, movie=movie)
+        
         if form.validate_on_submit():
             movie.title = form.title.data
             movie.description = form.description.data
             movie.year = form.year.data
+            
             # Обновляем постер, если загружен новый
             if form.poster_file.data:
                 filename = secure_filename(form.poster_file.data.filename)
@@ -1053,6 +1069,7 @@ def edit_movie(movie_id):
                 save_path = os.path.join('static', 'images', unique_name)
                 form.poster_file.data.save(save_path)
                 movie.poster_path = f"/static/images/{unique_name}"
+            
             # Обновляем режиссера
             if form.new_director.data:
                 director = Director(name=form.new_director.data)
@@ -1061,6 +1078,7 @@ def edit_movie(movie_id):
                 movie.director_id = director.id
             elif form.director_id.data and form.director_id.data != 0:
                 movie.director_id = form.director_id.data
+            
             # Обновляем жанры
             movie.genres.clear()
             if form.genres.data:
@@ -1074,6 +1092,7 @@ def edit_movie(movie_id):
                         db.commit()
                     if genre not in movie.genres:
                         movie.genres.append(genre)
+            
             # Обновляем актеров
             movie.actors.clear()
             actor_objs = []
@@ -1088,10 +1107,12 @@ def edit_movie(movie_id):
                         db.commit()
                     actor_objs.append(actor)
             movie.actors = actor_objs
+            
             db.commit()
             flash('Фильм успешно обновлен!', 'success')
             return redirect(url_for('movie_detail', movie_id=movie.id))
-        # Заполняем форму данными фильма
+        
+        # Если форма не прошла валидацию, заполняем её данными фильма
         form.title.data = movie.title
         form.description.data = movie.description
         form.year.data = movie.year
@@ -1101,6 +1122,7 @@ def edit_movie(movie_id):
             form.genres.data = [g.id for g in movie.genres]
         if movie.actors:
             form.actors_ids.data = [a.id for a in movie.actors]
+        
         return render_template('edit_movie.html', form=form, movie=movie)
     finally:
         db.close()

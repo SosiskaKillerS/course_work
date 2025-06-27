@@ -30,7 +30,7 @@
                         </li>
                     {% endif %}
                 </ul>
-                {% if current_user.is_authenticated %}
+                {% if current_user.is_authenticated and request.endpoint != 'profile' %}
                 <form method="get" action="{{ url_for('index') }}" class="d-flex align-items-center me-3 flex-grow-1" style="gap: 0.5rem; margin-left: 24px; min-width: 0;">
                     <input type="text" name="search" class="form-control flex-grow-1" placeholder="Поиск по названию..." value="{{ search|default('') }}" style="background: #18122b; color: #fff; border: 2px solid var(--primary-color); border-radius: 10px; min-width: 0;">
                     <button type="submit" class="btn btn-primary" style="font-size: 1.3em; padding: 0.5em 1em;">🔍</button>
