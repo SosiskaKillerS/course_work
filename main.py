@@ -17,11 +17,17 @@ from config import Config
 
 # Создаем Flask приложение
 app = Flask(__name__)
-app.config['SECRET_KEY'] = Config.SECRET_KEY
+app.config.from_object(Config)
+
+# Принудительно устанавливаем правильный DATABASE_URL для production
+if not app.config.get('DATABASE_URL') or 'postgres.railway.internal' in app.config.get('DATABASE_URL', ''):
+    app.config['DATABASE_URL'] = "postgresql://postgres:RDKfrkCYOuTROuupbuGiURnAwpXacgEF@shinkansen.proxy.rlwy.net:27165/railway"
+
+# Отладочная информация
+print(f"DATABASE_URL: {app.config['DATABASE_URL']}")
 
 # Настройка базы данных
-DATABASE_URL = Config.DATABASE_URL
-engine = create_engine(DATABASE_URL)
+engine = create_engine(app.config['DATABASE_URL'])
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
